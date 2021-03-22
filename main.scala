@@ -22,6 +22,7 @@ object union extends App {
     ) yield ((i - (validSize / 2), j - validSize / 2))
   }
 
+  // rewrite to accept map and output map
   def getAdjacent(
       pos: Position,
       kernel: IndexedSeq[(Int, Int)],
@@ -46,11 +47,6 @@ object union extends App {
       }
     })
   }
-
-  def updateReducer(
-      updates: List[IndexedSeq[(Position, Status)]],
-      prev: List[Seat]
-  ) = {}
 
   val initial = List(
     List(MASKED, MASKED, MASKED, MASKED, MASKED),
