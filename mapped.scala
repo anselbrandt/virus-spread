@@ -18,13 +18,14 @@ object mapped extends App {
     List(MASKED, MASKED, MASKED, SICK, MASKED)
   )
 
-  val flatWithIndices =
-    initial
+  def flatWithIndices[T](list2d: List[List[T]]) =
+    list2d
       .map(_.zipWithIndex)
       .zipWithIndex
       .map { case (row, i) =>
         row.map { case (value, j) => ((i, j), value) }
       }
       .flatten
-  flatWithIndices.foreach(println)
+  val flattened = flatWithIndices(initial)
+  flattened.foreach(println)
 }
