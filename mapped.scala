@@ -49,9 +49,17 @@ object mapped extends App {
       }
     })
   }
+  def merge(
+      seatMap: Map[Position, Status],
+      updates: IndexedSeq[(Position, Status)]
+  ) = {
+    val prev = map.get(up)
+  }
 
-  val seatMap = toMap(initial)
-  val updates = seatMap
+  val gridMap = toMap(initial)
+  val updates = gridMap
     .filter(_._2 == SICK)
-    .map(seat => getAdjacent(seat._1, getKernel(3), seatMap))
+    .map(cell => getAdjacent(cell._1, getKernel(3), gridMap))
+    .map(cell => getUpdate(cell))
+  updates.foldLeft(gridMap)((map, value) => (map, value))
 }
