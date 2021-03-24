@@ -28,19 +28,30 @@ object mapped extends App {
       (cell, j) <- (1 to validSize).zipWithIndex
     ) yield ((i - (validSize / 2), j - validSize / 2))
   }
-  def getAdjacent[T](
+  def getAdjacent(
       pos: Position,
       kernel: IndexedSeq[(Int, Int)],
       seatMap: Map[Position, Status]
-  ) = kernel
+  ): IndexedSeq[(Position, Status)] = kernel
     .map(k => Position(pos.row - k._1, pos.col - k._2))
-    .map(pos => (pos, seatMap.get(pos)))
-    .filter(_._2.isDefined)
-  // .map { case (pos, Some(status)) => (pos, status) }
+    .map(pos => (pos, seatMap.getOrElse(pos, UNOCCUPIED)))
+    .filter(_._2 != UNOCCUPIED)
+
+  def getUpdate(
+      adjacent: IndexedSeq[(Position, Status)]
+  ): IndexedSeq[(Position, Status)] = {
+    adjacent.map(pos => {
+      pos._2 match {
+        case SICK       => (pos._1, SICK)
+        case UNMASKED   => (pos._1, SICK)
+        case MASKED     => (pos._1, UNMASKED)
+        case UNOCCUPIED => (pos._1, UNOCCUPIED)
+      }
+    })
+  }
 
   val seatMap = toMap(initial)
-  val kernel = getKernel(3)
-  val adjacent = getAdjacent(Position(0, 0), kernel, seatMap)
-  val sick = seatMap.filter(_._2 == SICK)
-  println(adjacent)
+  val updates = seatMap
+    .filter(_._2 == SICK)
+    .map(seat => getAdjacent(seat._1, getKernel(3), seatMap))
 }
