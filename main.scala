@@ -1,4 +1,4 @@
-object union extends App {
+object main extends App {
   object Status extends Enumeration {
     type Status = Value
     val UNOCCUPIED, UNMASKED, MASKED, SICK = Value
