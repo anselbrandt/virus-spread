@@ -18,16 +18,18 @@ object main extends App {
     List(MASKED, MASKED, MASKED, MASKED, MASKED)
   )
 
-  def toMap[T](list: List[List[T]]) =
+  def toMap[T](list: List[List[T]]): Map[Position, T] =
     (for (i <- (0 until list.length); j <- (0 until list(0).length))
       yield Position(i, j)).zip(list.flatten).toMap
-  def getKernel(size: Int) = {
+
+  def getKernel(size: Int): IndexedSeq[(Int, Int)] = {
     val validSize = if (size < 3) 3 else if (size % 2 == 0) size + 1 else size
     for (
       (row, i) <- (1 to validSize).zipWithIndex;
       (cell, j) <- (1 to validSize).zipWithIndex
     ) yield ((i - (validSize / 2), j - validSize / 2))
   }
+
   def getAdjacent(
       pos: Position,
       kernel: IndexedSeq[(Int, Int)],
@@ -50,11 +52,12 @@ object main extends App {
     })
   }
 
-  def getUpdates(gridMap: Map[Position, Value]) = gridMap
-    .filter(_._2 == SICK)
-    .map(cell => getAdjacent(cell._1, getKernel(3), gridMap))
-    .map(cell => getUpdate(cell))
-    .flatten
+  def getUpdates(gridMap: Map[Position, Value]): Iterable[(Position, Status)] =
+    gridMap
+      .filter(_._2 == SICK)
+      .map(cell => getAdjacent(cell._1, getKernel(3), gridMap))
+      .map(cell => getUpdate(cell))
+      .flatten
 
   def recursive(
       gridMap: Map[Position, Value],
