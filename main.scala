@@ -7,13 +7,20 @@ object main extends App {
   import Status._
 
   case class Position(row: Int, col: Int)
-  case class Seat(pos: Position, status: Status)
 
-  def getSeats(matrix: List[List[Status]]) = {
-    for ((row, i) <- matrix.zipWithIndex; (cell, j) <- row.zipWithIndex)
-      yield Seat(Position(i, j), cell)
-  }
+  val initial = List(
+    List(MASKED, MASKED, MASKED, MASKED, MASKED),
+    List(MASKED, SICK, MASKED, MASKED, MASKED),
+    List(MASKED, MASKED, MASKED, MASKED, MASKED),
+    List(MASKED, MASKED, MASKED, MASKED, MASKED),
+    List(MASKED, MASKED, MASKED, MASKED, MASKED),
+    List(MASKED, MASKED, MASKED, SICK, MASKED),
+    List(MASKED, MASKED, MASKED, MASKED, MASKED)
+  )
 
+  def toMap[T](list: List[List[T]]) =
+    (for (i <- (0 until list.length); j <- (0 until list(0).length))
+      yield Position(i, j)).zip(list.flatten).toMap
   def getKernel(size: Int) = {
     val validSize = if (size < 3) 3 else if (size % 2 == 0) size + 1 else size
     for (
@@ -21,24 +28,19 @@ object main extends App {
       (cell, j) <- (1 to validSize).zipWithIndex
     ) yield ((i - (validSize / 2), j - validSize / 2))
   }
-
-  // rewrite to accept map and output map
   def getAdjacent(
       pos: Position,
       kernel: IndexedSeq[(Int, Int)],
-      list: List[List[Status]]
-  ) = {
-    kernel
-      .map(k => Position(pos.row - k._1, pos.col - k._2))
-      .filter(pos => pos.row >= 0 && pos.col >= 0)
-      .filter(pos => pos.row < list.length && pos.col < list(0).length)
-      .map(pos => (pos, list(pos.row)(pos.col)))
-  }
+      seatMap: Map[Position, Status]
+  ): IndexedSeq[(Position, Status)] = kernel
+    .map(k => Position(pos.row - k._1, pos.col - k._2))
+    .map(pos => (pos, seatMap.getOrElse(pos, UNOCCUPIED)))
+    .filter(_._2 != UNOCCUPIED)
 
   def getUpdate(
-      seq: IndexedSeq[(Position, Status)]
+      adjacent: IndexedSeq[(Position, Status)]
   ): IndexedSeq[(Position, Status)] = {
-    seq.map(pos => {
+    adjacent.map(pos => {
       pos._2 match {
         case SICK       => (pos._1, SICK)
         case UNMASKED   => (pos._1, SICK)
@@ -48,20 +50,26 @@ object main extends App {
     })
   }
 
-  val initial = List(
-    List(MASKED, MASKED, MASKED, MASKED, MASKED),
-    List(MASKED, SICK, MASKED, MASKED, MASKED),
-    List(MASKED, MASKED, MASKED, MASKED, MASKED),
-    List(MASKED, MASKED, MASKED, SICK, MASKED),
-    List(MASKED, MASKED, MASKED, MASKED, MASKED)
-  )
+  def getUpdates(gridMap: Map[Position, Value]) = gridMap
+    .filter(_._2 == SICK)
+    .map(cell => getAdjacent(cell._1, getKernel(3), gridMap))
+    .map(cell => getUpdate(cell))
+    .flatten
 
-  val seats = getSeats(initial)
-  val kernel = getKernel(3)
-  val sick = seats.filter(seat => seat.status == SICK).map(seat => seat.pos)
-  val updates =
-    sick
-      .map(seat => getAdjacent(seat, kernel, initial))
-      .map(adjacent => getUpdate(adjacent))
+  def update(
+      gridMap: Map[Position, Value]
+  ) = getUpdates(gridMap).foldLeft(
+    gridMap
+  )((map, update) => {
+    (map.get(update._1), update._2) match {
+      case (UNMASKED, SICK)   => map + (update._1 -> SICK)
+      case (MASKED, UNMASKED) => map + (update._1 -> UNMASKED)
+      case (_, _)             => map + (update._1 -> update._2)
+    }
+  })
 
+  val gridMap = toMap(initial)
+  val iter = update(gridMap)
+  val iter2 = update(iter)
+  iter2.foreach(println)
 }

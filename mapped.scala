@@ -49,17 +49,27 @@ object mapped extends App {
       }
     })
   }
-  def merge(
-      seatMap: Map[Position, Status],
-      updates: IndexedSeq[(Position, Status)]
-  ) = {
-    val prev = map.get(up)
-  }
 
-  val gridMap = toMap(initial)
-  val updates = gridMap
+  def getUpdates(gridMap: Map[Position, Value]) = gridMap
     .filter(_._2 == SICK)
     .map(cell => getAdjacent(cell._1, getKernel(3), gridMap))
     .map(cell => getUpdate(cell))
-  updates.foldLeft(gridMap)((map, value) => (map, value))
+    .flatten
+
+  def update(
+      gridMap: Map[Position, Value]
+  ) = getUpdates(gridMap).foldLeft(
+    gridMap
+  )((map, update) => {
+    (map.get(update._1), update._2) match {
+      case (UNMASKED, SICK)   => map + (update._1 -> SICK)
+      case (MASKED, UNMASKED) => map + (update._1 -> UNMASKED)
+      case (_, _)             => map + (update._1 -> update._2)
+    }
+  })
+
+  val gridMap = toMap(initial)
+  val iter = update(gridMap)
+  val iter2 = update(iter)
+  iter2.foreach(println)
 }
