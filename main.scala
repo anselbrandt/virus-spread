@@ -56,20 +56,25 @@ object main extends App {
     .map(cell => getUpdate(cell))
     .flatten
 
-  def update(
-      gridMap: Map[Position, Value]
-  ) = getUpdates(gridMap).foldLeft(
-    gridMap
-  )((map, update) => {
-    (map.get(update._1), update._2) match {
-      case (UNMASKED, SICK)   => map + (update._1 -> SICK)
-      case (MASKED, UNMASKED) => map + (update._1 -> UNMASKED)
-      case (_, _)             => map + (update._1 -> update._2)
-    }
-  })
+  def recursive(
+      gridMap: Map[Position, Value],
+      count: Int = 0
+  ): (Map[Position, Value], Int) = {
+    val prev = gridMap
+    val curr = getUpdates(gridMap).foldLeft(
+      gridMap
+    )((map, update) => {
+      (map.get(update._1), update._2) match {
+        case (UNMASKED, SICK)   => map + (update._1 -> SICK)
+        case (MASKED, UNMASKED) => map + (update._1 -> UNMASKED)
+        case (_, _)             => map + (update._1 -> update._2)
+      }
+    })
+    if (prev == curr) (curr, count)
+    else (recursive(curr, count + 1)._1, recursive(curr, count + 1)._2)
+  }
 
   val gridMap = toMap(initial)
-  val iter = update(gridMap)
-  val iter2 = update(iter)
-  iter2.foreach(println)
+  val spread = recursive(gridMap)
+  println(spread._2)
 }
